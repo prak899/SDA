@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragments.SellFragment">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_launcher_background"
+        android:layout_marginTop="50dp"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/carImage"
+        android:contentDescription="TODO" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="dummyData to check whether it's showing or not ->"
+        android:id="@+id/carDescription"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="25dp"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Buy now"
+        android:layout_gravity="bottom|center_horizontal"
+        android:id="@+id/carBuy"/>
+</FrameLayout>
