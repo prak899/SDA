@@ -1,15 +1,19 @@
 package com.example.testing.activity;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.testing.adapter.RecyclerAdapter;
 import com.example.testing.databinding.ActivityMainBinding;
+import com.example.testing.utils.RootUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -21,34 +25,53 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private LinkedList<String> linkedList;
     private boolean isNewAvailable;
-    private int age = 19;
-
+    ActivityMainBinding activityMainBinding;
+    private RootUtil rootUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActivityMainBinding activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
+        activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
+        rootUtil = new RootUtil();
         activityMainBinding.recyclerData
                 .setLayoutManager(new LinearLayoutManager(this));
-        getSampleDataList();
-        isNewAvailable(activityMainBinding, age);
-        recyclerViewData(activityMainBinding);
 
+        if (rootUtil.isDeviceRooted())
+            alertDialog("You can't run this app in your device (Rooted Device error)");
+        else{
+            Toast.makeText(this, "You can continue", Toast.LENGTH_SHORT).show();
+            getSampleDataList();
+            int age = 19;
+            isNewAvailable(activityMainBinding, age);
+            recyclerViewData();
+        }
     }
-
+    private void alertDialog(String msg){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(msg)
+                .setCancelable(false)
+                .setPositiveButton("Exit", (dialog, id)
+                        -> MainActivity.this.finish());
+                /*.setNegativeButton("No", (dialog, id)
+                        -> dialog.cancel());*/
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
     private void isNewAvailable(ActivityMainBinding activityMainBinding, int age) {
         isNewAvailable = getAge(age);
     }
-    private boolean getAge(int age){
-        boolean isApplicable ;
+
+    private boolean getAge(int age) {
+        boolean isApplicable;
         isApplicable = age > 18;
 
         return isApplicable;
     }
+
     @SuppressLint("NotifyDataSetChanged")
-    private void recyclerViewData(ActivityMainBinding activityMainBinding) {
-        linkedList  = new LinkedList<>(getSampleDataList());
+    public void recyclerViewData() {
+        linkedList = new LinkedList<>(getSampleDataList());
         IntStream.range(0, linkedList.size()).forEach(i -> {
 
             RecyclerAdapter recyclerAdapter = new RecyclerAdapter(
@@ -60,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @NonNull
     private List<String> getSampleDataList() {
         List<String> stringList = new ArrayList<>();
         try {
@@ -67,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
                 stringList.add("dummyData to check whether it's showing or not ->" + i);
             }
         } catch (Exception e) {
-            Log.d(TAG, "getSampleDataList: "+e.getMessage());
+            Log.d(TAG, "getSampleDataList: " + e.getMessage());
         }
         return stringList;
     }

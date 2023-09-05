@@ -26,11 +26,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    viewBinding {
-        enable = true;
-    }
     buildFeatures {
         viewBinding = true
+        //dataBinding = true
     }
 
 }
@@ -43,7 +41,8 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation ("org.mockito:mockito-core:3.11.2")
 
-//    testImplementation("org.mockito:mockito-core:5.5.0")
-//    testImplementation("org.mockito:mockito-junit-jupiter:5.5.0")
+    /*testImplementation ("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.7.0")*/
 }
