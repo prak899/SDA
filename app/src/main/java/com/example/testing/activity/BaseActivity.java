@@ -77,14 +77,6 @@ public class BaseActivity extends AppCompatActivity {
         super.onPause();
 
         //moveTaskToBack(true);
-    }
-    public boolean onKeyDown(int keyCode, KeyEvent event)
-    {
-        if (keyCode == KeyEvent.KEYCODE_BACK)
-        {
-            moveTaskToBack(true);
-            return true; // return
-        }
-        return false;
+
     }
 }

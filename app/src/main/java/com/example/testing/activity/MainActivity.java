@@ -12,13 +12,25 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.testing.adapter.RecyclerAdapter;
+import com.example.testing.api.ApiService;
+import com.example.testing.api.RetrofitClient;
 import com.example.testing.databinding.ActivityMainBinding;
+import com.example.testing.model.RequestBody;
+import com.example.testing.utils.RootDetection;
 import com.example.testing.utils.RootUtil;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.IntStream;
+
+import okhttp3.Request;
+import okio.Timeout;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isNewAvailable;
     ActivityMainBinding activityMainBinding;
     private RootUtil rootUtil;
+    private RootDetection rootDetection;
+    private ApiService apiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +48,12 @@ public class MainActivity extends AppCompatActivity {
         activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
         rootUtil = new RootUtil();
+        rootDetection = new RootDetection();
+        apiService = RetrofitClient.getClient().create(ApiService.class);
         activityMainBinding.recyclerData
                 .setLayoutManager(new LinearLayoutManager(this));
 
-        if (rootUtil.isDeviceRooted())
+        if (rootDetection.isDeviceRooted())
             alertDialog("You can't run this app in your device (Rooted Device error)");
         else{
             Toast.makeText(this, "You can continue", Toast.LENGTH_SHORT).show();
@@ -94,5 +110,30 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "getSampleDataList: " + e.getMessage());
         }
         return stringList;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    private void getLatestData(){
+        Call<RequestBody> requestBodyCall = apiService.getApiResponse();
+        requestBodyCall.enqueue(new Callback<RequestBody>() {
+            @Override
+            public void onResponse(@NonNull Call<RequestBody> call, @NonNull Response<RequestBody> response) {
+                if (null != response.body()){
+                    String responseData = response.body().getData();
+
+                }
+
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<RequestBody> call, @NonNull Throwable t) {
+
+            }
+        });
+
     }
 }
