@@ -1,6 +1,6 @@
 package com.example.testing.api;
 
-import com.example.testing.model.RequestBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.GET;
 

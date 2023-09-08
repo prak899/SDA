@@ -19,3 +19,22 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keep class com.example.testing.activity.MainActivity { *; }
+-keepclassmembers class com.example.testing.activity.MainActivity. **{
+    public *;
+}
+-keep class com.example.testing.activity.   ** { *; }
+-keep class com.example.testing.adapter.    ** { *; }
+-keep class com.example.testing.api.        ** { *; }
+-keep interface com.example.testing.api.ApiService. ** { *; }
+-keepclassmembers class com.example.testing.activity. ** { *; }
+-keep class com.example.testing.fragments. ** { *; }
+
+
+
+
+
+
+
+
+

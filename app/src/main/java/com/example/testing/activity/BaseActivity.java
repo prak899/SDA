@@ -14,6 +14,7 @@ import com.example.testing.R;
 import com.example.testing.fragments.BuyFragment;
 import com.example.testing.fragments.SellFragment;
 
+import java.util.LinkedList;
 import java.util.Objects;
 
 public class BaseActivity extends AppCompatActivity {
@@ -23,6 +24,8 @@ public class BaseActivity extends AppCompatActivity {
     private BuyFragment buyFragment;
     private SellFragment sellFragment;
     private String fragmentChecker = "";
+    private MainActivity mainActivity;
+    private LinkedList linkedList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +47,10 @@ public class BaseActivity extends AppCompatActivity {
                     break;
             }
         }
+        linkedList = new LinkedList<>(mainActivity.getSampleDataList());
+        for (int i = 0; i < linkedList.size(); i++){
+            Log.d(TAG, "onCreate: "+linkedList.toString());
+        }
 
     }
 
@@ -58,7 +65,9 @@ public class BaseActivity extends AppCompatActivity {
         mfragmentManager = getSupportFragmentManager();
         buyFragment = new BuyFragment();
         sellFragment = new SellFragment();
+        mainActivity = new MainActivity();
 
+        linkedList = new LinkedList<>();
         //get bundle data
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();

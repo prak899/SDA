@@ -23,7 +23,7 @@ public class SellFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_buy, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_sell, container, false);
         Bundle arguments = getArguments();
         if (arguments != null) {
             String receivedData = arguments.getString("carData"); // Replace "key" with the actual key

@@ -5,10 +5,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.MainActivity">
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/recyclerData"
-        tools:listitem="@layout/recycler_view"/>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="49dp"
+        tools:layout_editor_absoluteY="-362dp"
+        tools:listitem="@layout/recycler_view"
+        tools:ignore="MissingConstraints" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:ignore="MissingConstraints"
+        android:text="Do you want to turn on sync"
+        app:layout_constraintBaseline_toBottomOf="@id/recyclerData"
+        android:layout_marginTop="30dp"
+        android:padding="25dp"
+        android:id="@+id/syncing"
+        android:paddingTop="50dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
