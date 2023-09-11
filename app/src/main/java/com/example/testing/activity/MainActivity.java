@@ -5,10 +5,12 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
@@ -21,10 +23,14 @@ import com.example.testing.adapter.RecyclerAdapter;
 import com.example.testing.api.ApiService;
 import com.example.testing.api.RetrofitClient;
 import com.example.testing.databinding.ActivityMainBinding;
+import com.example.testing.enumartion.TaskStatus;
+import com.example.testing.model.DataModel;
 import com.example.testing.utils.AppInitializer;
 import com.example.testing.utils.DatabaseSyncService;
+import com.example.testing.utils.EncryptionUtil;
 import com.example.testing.utils.RootDetection;
 import com.example.testing.utils.RootUtil;
+import com.example.testing.utils.SyncReceiver;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -40,7 +46,9 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding activityMainBinding;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
-
+    private static final int SYNC_ALARM_REQUEST_CODE = 0;
+    private SyncReceiver syncReceiver;
+    private DataModel progress, todo, completed, cancelled;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +57,25 @@ public class MainActivity extends AppCompatActivity {
         setContentView(activityMainBinding.getRoot());
         initialize();
         RootDetection rootDetection = new RootDetection();
+        progress = new DataModel("progress", TaskStatus.IN_PROGRESS);
+        todo = new DataModel("todo", TaskStatus.TODO);
+        completed = new DataModel("completed", TaskStatus.COMPLETED);
+        cancelled = new DataModel("cancelled", TaskStatus.CANCELED);
 
 
+        Log.d(TAG, "onCreate: "+
+                progress.getData()+"\n"+
 
+                progress.getTaskStatus()+"\n"+
+                todo.getTaskStatus()+"\n"+
+                completed.getTaskStatus()+"\n"+
+                cancelled.getTaskStatus());
+
+        if (progress.getTaskStatus().equals(TaskStatus.IN_PROGRESS)){
+            Log.d(TAG, "onCreate: can't continue");
+        } else {
+            TaskStatus.IN_PROGRESS.compareTo(progress.getTaskStatus());
+        }
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         activityMainBinding.recyclerData
                 .setLayoutManager(new LinearLayoutManager(this));
@@ -60,8 +84,7 @@ public class MainActivity extends AppCompatActivity {
             alertDialog();
 
             Log.d(TAG, "onCreate: "+ rootDetection.isDeviceRooted());
-        }
-        else{
+        } else {
             //Toast.makeText(this, "You can continue", Toast.LENGTH_SHORT).show();
             getSampleDataList();
             int age = 19;
@@ -78,6 +101,11 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = getApplicationContext().getSharedPreferences("dataSyncPrefs", 0);
         editor = sharedPreferences.edit();
 
+        // Register the BroadcastReceiver for receiving sync updates
+        syncReceiver = new SyncReceiver();
+        IntentFilter intentFilter = new IntentFilter(SyncReceiver.SYNC_ACTION);
+        registerReceiver(syncReceiver, intentFilter);
+
         if (sharedPreferences != null) {
             Map<String, ?> allEntries = sharedPreferences.getAll();
 
@@ -85,7 +113,8 @@ public class MainActivity extends AppCompatActivity {
                 // SharedPreferences file exists and contains data
                 // You can perform actions here if needed
                 boolean isDataSync = sharedPreferences.getBoolean("isDataSync", false);
-                Toast.makeText(this, "your data "+isDataSync, Toast.LENGTH_SHORT).show();
+
+                activityMainBinding.syncing.setChecked(isDataSync);
             } else {
                 Toast.makeText(this, "File empty", Toast.LENGTH_SHORT).show();
             }
@@ -94,16 +123,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         editor.putBoolean("key_name", true); // Storing boolean - true/false
-        editor.putString("key_name", "string value"); // Storing string
-        editor.putInt("key_name", 90); // Storing integer
-        editor.putFloat("key_name", 99); // Storing float
-        editor.putLong("key_name", 123456); // Storing long
+        editor.putString("key_name1", "string value"); // Storing string
+        editor.putInt("key_name2", 90); // Storing integer
+        editor.putFloat("key_name3", 99); // Storing float
+        editor.putLong("key_name4", 123456); // Storing long
 
         editor.commit(); // commit changes
         activityMainBinding.syncing.setOnCheckedChangeListener((compoundButton, b) -> {
             if (b){
-                AppInitializer.initialize(MainActivity.this);
-
+               // AppInitializer.initialize(MainActivity.this);
+                scheduleSync();
             } else {
                 Toast.makeText(MainActivity.this, "Disabled", Toast.LENGTH_SHORT).show();
 
@@ -149,10 +178,15 @@ public class MainActivity extends AppCompatActivity {
 
     @NonNull
     public List<String> getSampleDataList() {
+
         List<String> stringList = new ArrayList<>();
         try {
-            for (int i = 0; i < 10; i++) {
-                stringList.add("dummyData to check whether it's showing or not ->" + i);
+            String secretKey = EncryptionUtil.generateSecretKey();
+            for (int i = 0; i < 15; i++) {
+                String printableData = "dummyData to check whether it's showing or not ->" + i;
+                String encryptedText = EncryptionUtil.encrypt(printableData, secretKey);
+                String decryptedText = EncryptionUtil.decrypt(encryptedText, secretKey);
+                stringList.add(decryptedText);
             }
         } catch (Exception e) {
             Log.d(TAG, "getSampleDataList: " + e.getMessage());
@@ -160,10 +194,6 @@ public class MainActivity extends AppCompatActivity {
         return stringList;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
     /*private void getLatestData(){
         Call<RequestBody> requestBodyCall = apiService.getApiResponse();
         requestBodyCall.enqueue(new Callback<RequestBody>() {
@@ -192,5 +222,41 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "syncData: "+ e.getMessage());
         }
 
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister the BroadcastReceiver when the activity is destroyed
+        unregisterReceiver(syncReceiver);
+    }
+
+    // Button click handler to manually trigger data sync
+    public void syncDataManually(View view) {
+        // You can call your data sync logic here
+        Toast.makeText(this, "Manually syncing data...", Toast.LENGTH_SHORT).show();
+    }
+
+    // Schedule the daily sync alarm when the "Schedule Sync" button is clicked
+    public void scheduleSync() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, SyncReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, SYNC_ALARM_REQUEST_CODE, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Set the time for the alarm to trigger (e.g., 2:00 PM daily)
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, 14); // 2:00 PM
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+
+        // Schedule the alarm to repeat daily
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+        );
+
+        Toast.makeText(this, "Sync alarm scheduled daily at 2:00 PM", Toast.LENGTH_LONG).show();
     }
 }

@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
@@ -24,6 +25,7 @@ public class DatabaseSyncService extends IntentService {
         handler.post(() -> {
             MainActivity mainActivity = new MainActivity();
             mainActivity.syncData();
+            Log.d("IntentService", "onHandleIntent: service started");
         });
     }
 }

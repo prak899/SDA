@@ -28,7 +28,6 @@ public class AppInitializer {
                 AlarmManager.INTERVAL_DAY,
                 pendingIntent
         );
-        Toast.makeText(context, "Sync started at "+ calendar, Toast.LENGTH_SHORT).show();
-        Log.d("SyncService", "initialize: "+calendar);
+        Log.d("SyncService", "initialize: "+calendar.getTimeInMillis());
     }
 }
