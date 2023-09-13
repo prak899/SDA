@@ -25,4 +25,12 @@
         android:padding="25dp"
         android:id="@+id/syncing"
         android:paddingTop="50dp"/>
+    <TextView
+        android:text="@string/app_name"
+        android:gravity="center"
+        android:layout_marginTop="100dp"
+        android:id="@+id/countDown"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBaseline_toBottomOf="@id/syncing"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

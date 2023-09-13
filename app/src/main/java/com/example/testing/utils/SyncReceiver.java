@@ -13,14 +13,7 @@ public class SyncReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Toast.makeText(context, "Syncing data...", Toast.LENGTH_SHORT).show();
-        /*Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(() -> {
-            MainActivity mainActivity = new MainActivity();
-            mainActivity.syncData();
-            Log.d("IntentService", "onHandleIntent: service started");
-        });*/
-        // You can also send a broadcast to notify other components of the sync completion.
+        DataSyncHelper.syncData(context);
         Intent syncCompleteIntent = new Intent(SYNC_ACTION);
         context.sendBroadcast(syncCompleteIntent);
     }

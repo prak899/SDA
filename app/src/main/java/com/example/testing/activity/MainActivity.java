@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.icu.util.Calendar;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity {
@@ -71,21 +73,14 @@ public class MainActivity extends AppCompatActivity {
                 completed.getTaskStatus()+"\n"+
                 cancelled.getTaskStatus());
 
-        if (progress.getTaskStatus().equals(TaskStatus.IN_PROGRESS)){
-            Log.d(TAG, "onCreate: can't continue");
-        } else {
-            TaskStatus.IN_PROGRESS.compareTo(progress.getTaskStatus());
-        }
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
         activityMainBinding.recyclerData
                 .setLayoutManager(new LinearLayoutManager(this));
 
         if (!rootDetection.isDeviceRooted()) {
-            alertDialog();
+            alertDialog("You can't run this app in your device (Rooted Device error)");
 
-            Log.d(TAG, "onCreate: "+ rootDetection.isDeviceRooted());
         } else {
-            //Toast.makeText(this, "You can continue", Toast.LENGTH_SHORT).show();
             getSampleDataList();
             int age = 19;
             isNewAvailable(activityMainBinding, age);
@@ -140,9 +135,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void alertDialog(){
+    private void alertDialog(String msg){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("You can't run this app in your device (Rooted Device error)")
+        builder.setMessage(msg)
                 .setCancelable(false)
                 .setPositiveButton("Exit", (dialog, id)
                         -> MainActivity.this.finish());
@@ -182,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         List<String> stringList = new ArrayList<>();
         try {
             String secretKey = EncryptionUtil.generateSecretKey();
-            for (int i = 0; i < 15; i++) {
+            for (int i = 0; i < 5; i++) {
                 String printableData = "dummyData to check whether it's showing or not ->" + i;
                 String encryptedText = EncryptionUtil.encrypt(printableData, secretKey);
                 String decryptedText = EncryptionUtil.decrypt(encryptedText, secretKey);
@@ -235,15 +230,17 @@ public class MainActivity extends AppCompatActivity {
         // You can call your data sync logic here
         Toast.makeText(this, "Manually syncing data...", Toast.LENGTH_SHORT).show();
     }
-
+    Calendar calendar = Calendar.getInstance();
     // Schedule the daily sync alarm when the "Schedule Sync" button is clicked
     public void scheduleSync() {
+        editor.putBoolean("isDataSync", true);
+        editor.apply();
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, SyncReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, SYNC_ALARM_REQUEST_CODE, intent, PendingIntent.FLAG_IMMUTABLE);
 
         // Set the time for the alarm to trigger (e.g., 2:00 PM daily)
-        Calendar calendar = Calendar.getInstance();
+
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, 14); // 2:00 PM
         calendar.set(Calendar.MINUTE, 0);
@@ -256,7 +253,61 @@ public class MainActivity extends AppCompatActivity {
                 AlarmManager.INTERVAL_DAY,
                 pendingIntent
         );
-
+        countDownTimer();
         Toast.makeText(this, "Sync alarm scheduled daily at 2:00 PM", Toast.LENGTH_LONG).show();
+    }
+    private void countDownTimer(){
+        // Calculate time remaining until the next alarm
+        Calendar currentCalendar = Calendar.getInstance();
+        long currentTimeMillis = currentCalendar.getTimeInMillis();
+
+        Calendar alarmCalendar = Calendar.getInstance();
+        alarmCalendar.setTimeInMillis(calendar.getTimeInMillis()); // Use the alarm time you set
+
+        long alarmTimeMillis = alarmCalendar.getTimeInMillis();
+
+        // Calculate the time remaining in milliseconds
+        long timeRemainingMillis = alarmTimeMillis - currentTimeMillis;
+
+        // Ensure the time remaining is positive
+        if (timeRemainingMillis < 0) {
+            timeRemainingMillis += AlarmManager.INTERVAL_DAY;
+        }
+
+        // Calculate hours, minutes, and seconds from timeRemainingMillis
+        /*long hours = TimeUnit.MILLISECONDS.toHours(timeRemainingMillis);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeRemainingMillis) - TimeUnit.HOURS.toMinutes(hours);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(timeRemainingMillis) - TimeUnit.HOURS.toSeconds(hours) - TimeUnit.MINUTES.toSeconds(minutes);
+
+        // You now have `hours`, `minutes`, and `seconds` representing the time remaining until the alarm.
+
+        String countdownText = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        activityMainBinding.countDown.setText(countdownText);
+        Log.d(TAG, "countDownTimer: "+countdownText);*/
+        CountDownTimer countDownTimer = new CountDownTimer(timeRemainingMillis, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                // Calculate hours, minutes, and seconds from millisUntilFinished
+                long hours = TimeUnit.MILLISECONDS.toHours(millisUntilFinished);
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)
+                        - TimeUnit.HOURS.toMinutes(hours);
+                long seconds = TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished)
+                        - TimeUnit.HOURS.toSeconds(hours)
+                        - TimeUnit.MINUTES.toSeconds(minutes);
+
+                // Format the time and update the UI
+                String countdownText = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+                activityMainBinding.countDown.setText(countdownText);
+                Log.d(TAG, "countDownTimer: " + countdownText);
+            }
+
+            @Override
+            public void onFinish() {
+                // Handle the countdown timer finished event if needed
+            }
+        };
+
+        // Start the countdown timer
+        countDownTimer.start();
     }
 }
